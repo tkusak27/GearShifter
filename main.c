@@ -11,19 +11,65 @@ void setup() {
   lcd.begin(16, 2);
   pinMode(greenLED, OUTPUT);
   pinMode(redLED, OUTPUT);
+  pinMode(gas, INPUT);
+  pinMode(shift, INPUT);
 }
 
+// State of gas and gear buttons
+int gasState = 0;
+int shiftState = 0;
+
+// Speed
+int speed = 0;
+char charSpeed[10];
+
+// Gear
+int gear = 1;
+char charGear[10];
+
+bool gameStarted = false;
+
+
 void loop() {
-  // put your main code here, to run repeatedly:
+  if (!gameStarted) {
+    
+  }
+
+  lcd.clear();
+
   lcd.setCursor(0, 0);
-  // int potValue = analogRead(potPin);
+  sprintf(charSpeed, "%d", speed);
+  lcd.write(charSpeed);
+
+  lcd.setCursor(14, 0);
+  sprintf(charGear, "%d", gear);
+  lcd.write(charGear);
+
   analogWrite(contrastPin, 100);
-  // int ledValue = map(potValue, 0, 1024, 0, 255);
-  lcd.print("Progress 01");
-  lcd.setCursor(0, 1);
-  lcd.print("Hack Yeah");
 
-  digitalWrite(greenLED, HIGH);
-  digitalWrite(redLED, HIGH);
+  gasState = digitalRead(gas);
+  shiftState = digitalRead(shift);
 
+  // Gas is pressed
+  if (gasState == HIGH)
+  {
+    //digitalWrite(greenLED, HIGH);
+    lcd.setCursor(0, 0);
+    speed += 5;
+  }
+  else if (speed > 0)
+  {
+    speed--;
+  }
+
+  // Shift is pressed
+  if ((shiftState == HIGH) && (gear < 6))
+  {
+    gear++;
+    digitalWrite(redLED, HIGH);
+    delay(40);
+  }
+
+  digitalWrite(redLED, LOW);
+  delay(200);
 }
