@@ -46,6 +46,7 @@ char charGear[10];
 
 // Distance
 float distance = 0.0;
+float addOn = 0.0;
 char charDistance[10];
 
 // Time
@@ -55,7 +56,30 @@ char charSecs[10];
 char charMillis[10];
 
 bool gameStarted = false;
+bool gameFinished = false;
 bool countdownStarted = false;
+
+bool drawCar(byte car, float distance) {
+  lcd.clear();
+  if (distance < 100) lcd.setCursor(3, 1);
+  else if (distance >= 100 && distance < 200) lcd.setCursor(4, 1);
+  else if (distance >= 200 && distance < 300) lcd.setCursor(5, 1);
+  else if (distance >= 300 && distance < 400) lcd.setCursor(6, 1);
+  else if (distance >= 400 && distance < 500) lcd.setCursor(7, 1);
+  else if (distance >= 500 && distance < 600) lcd.setCursor(8, 1);
+  else if (distance >= 600 && distance < 700) lcd.setCursor(9, 1);
+  else if (distance >= 700 && distance < 800) lcd.setCursor(10, 1);
+  else if (distance >= 800 && distance < 900) lcd.setCursor(11, 1);
+  else if (distance >= 900 && distance < 1000) lcd.setCursor(12, 1);
+  if (distance >= 1000) {
+    lcd.clear();
+    lcd.setCursor(3, 0);
+    lcd.print("GAME FINISHED");
+    return true;
+  }
+  lcd.write(car);
+  return false;
+}
 
 // Countdown at start of game
 void countdown() {
@@ -107,6 +131,8 @@ void setup() {
   lcd.createChar(car, sprite1);
   lcd.createChar(flag, sprite2);
   lcd.clear();
+
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -136,7 +162,18 @@ void loop() {
   }
 
   // Display speed, gear, time, car, and flag
-  if (gameStarted) {
+  if (gameStarted && !gameFinished) {
+
+    elapsedTime = millis() - startTime;
+
+    // CLEAN UP !!!!!!!!!!!!!!!!
+    // Calculate Distance and Draw Car
+
+    int newTime = (elapsedTime / 1000);
+    addOn = (speed * newTime);
+    distance += addOn;
+    gameFinished = drawCar(car, distance);
+
     lcd.setCursor(0, 0);
     sprintf(charSpeed, "%d", speed);
     lcd.write(charSpeed);
@@ -144,8 +181,7 @@ void loop() {
     lcd.setCursor(14, 0);
     sprintf(charGear, "%d", gear);
     lcd.write(charGear);
-
-    elapsedTime = millis() - startTime;
+    
     int seconds = elapsedTime / 1000;
     int milliseconds = elapsedTime % 1000;
     sprintf(charSecs, "%d", seconds);
@@ -160,11 +196,35 @@ void loop() {
     lcd.setCursor(8, 0);
     lcd.print(charMillis);
 
-    lcd.setCursor(2, 1);
-    lcd.write(car);
-
     lcd.setCursor(13, 1);
     lcd.write(flag);
+
+
+    gasState = digitalRead(gas);
+    shiftState = digitalRead(shift);
+  }
+
+  if (gameFinished) {
+    lcd.clear();
+
+    // Calculate final time
+    int finalTime = elapsedTime;
+    int finalSeconds = elapsedTime / 1000;
+    int finalMilliseconds = elapsedTime % 1000;
+    sprintf(charSecs, "%d", finalSeconds);
+    if (finalSeconds < 10) lcd.setCursor(6, 1);
+    if (finalSeconds >= 10) lcd.setCursor(5, 1);
+    lcd.print(charSecs);
+
+    lcd.setCursor(7, 1);
+    lcd.print(".");
+
+    sprintf(charMillis, "%03d", finalMilliseconds);
+    lcd.setCursor(8, 1);
+    lcd.print(charMillis);
+
+    lcd.setCursor(3, 0);
+    lcd.print("FINAL TIME");
   }
 
   gasState = digitalRead(gas);
@@ -175,7 +235,7 @@ void loop() {
   {
     //digitalWrite(greenLED, HIGH);
     lcd.setCursor(0, 0);
-    speed += 5;
+    speed += 1;
   }
   else if (speed > 0)
   {
