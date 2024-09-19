@@ -1,4 +1,6 @@
 #include <LiquidCrystal.h>
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 LiquidCrystal lcd (8, 9, 4, 5, 6, 7);
 const int contrastPin = 2; // controls LCD contract
 const int greenLED = 10; // green LED
@@ -39,6 +41,21 @@ int shiftState = 0;
 // Speed
 int speed = 0;
 char charSpeed[10];
+const double vMax[] = {38.88, 69.02, 103.62, 135.52, 159.78, 188.87}; // in MPH
+
+
+// Acceleration
+double accelr8[6] = {
+  13.500000,
+  5.886719,
+  4.499350,
+  3.174129,
+  2.047257,
+  2.076374
+};
+
+// Deceleration
+const double decelr8 = 6.82; //MPH per second
 
 // Gear
 int gear = 1;
@@ -52,6 +69,7 @@ char charDistance[10];
 // Time
 int startTime;
 int elapsedTime;
+float newTime;
 char charSecs[10];
 char charMillis[10];
 
@@ -61,17 +79,17 @@ bool countdownStarted = false;
 
 bool drawCar(byte car, float distance) {
   lcd.clear();
-  if (distance < 100) lcd.setCursor(3, 1);
-  else if (distance >= 100 && distance < 200) lcd.setCursor(4, 1);
-  else if (distance >= 200 && distance < 300) lcd.setCursor(5, 1);
-  else if (distance >= 300 && distance < 400) lcd.setCursor(6, 1);
-  else if (distance >= 400 && distance < 500) lcd.setCursor(7, 1);
-  else if (distance >= 500 && distance < 600) lcd.setCursor(8, 1);
-  else if (distance >= 600 && distance < 700) lcd.setCursor(9, 1);
-  else if (distance >= 700 && distance < 800) lcd.setCursor(10, 1);
-  else if (distance >= 800 && distance < 900) lcd.setCursor(11, 1);
-  else if (distance >= 900 && distance < 1000) lcd.setCursor(12, 1);
-  if (distance >= 1000) {
+  if (distance < 10000) lcd.setCursor(3, 1);
+  else if (distance >= 50000 && distance < 10000) lcd.setCursor(4, 1);
+  else if (distance >= 10000 && distance < 15000) lcd.setCursor(5, 1);
+  else if (distance >= 15000 && distance < 20000) lcd.setCursor(6, 1);
+  else if (distance >= 20000 && distance < 25000) lcd.setCursor(7, 1);
+  else if (distance >= 25000 && distance < 30000) lcd.setCursor(8, 1);
+  else if (distance >= 30000 && distance < 35000) lcd.setCursor(9, 1);
+  else if (distance >= 35000 && distance < 40000) lcd.setCursor(10, 1);
+  else if (distance >= 40000 && distance < 45000) lcd.setCursor(11, 1);
+  else if (distance >= 45000 && distance < 50000) lcd.setCursor(12, 1);
+  if (distance >= 50000) {
     lcd.clear();
     lcd.setCursor(3, 0);
     lcd.print("GAME FINISHED");
@@ -117,6 +135,12 @@ void countdown() {
   delay(100);
 
   lcd.clear();
+}
+
+double calcSpeed(int speed, int g, float t){
+
+      speed += accelr8[g - 1] * t;
+      return MIN(speed, vMax[g - 1]);
 }
 
 void setup() {
@@ -169,7 +193,7 @@ void loop() {
     // CLEAN UP !!!!!!!!!!!!!!!!
     // Calculate Distance and Draw Car
 
-    int newTime = (elapsedTime / 1000);
+    newTime = (elapsedTime / 1000);
     addOn = (speed * newTime);
     distance += addOn;
     gameFinished = drawCar(car, distance);
@@ -235,11 +259,11 @@ void loop() {
   {
     //digitalWrite(greenLED, HIGH);
     lcd.setCursor(0, 0);
-    speed += 1;
+    speed = calcSpeed(speed, gear, newTime);
   }
   else if (speed > 0)
   {
-    speed--;
+    speed -= 6.82;
   }
 
   // Shift is pressed
