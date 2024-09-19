@@ -263,7 +263,7 @@ void loop() {
   }
   else if (speed > 0)
   {
-    speed -= 6.82;
+    speed -= decelr8; // Technically not deceleration, but suits our purposes
   }
 
   // Shift is pressed
